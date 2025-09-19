@@ -13,6 +13,7 @@ export interface User {
   education?: string | null;
   experience?: string | null;
   skills?: string | null;
+  lineId?: string | null;
 }
 
 export interface JobCategory {

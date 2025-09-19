@@ -56,6 +56,7 @@ export default function ProfilePage() {
       education: data.education,
       experience: data.experience,
       skills: data.skills,
+      lineId: data.lineId,
     };
     try {
       const response = await api.put('/users/profile', payload);
@@ -173,17 +174,27 @@ export default function ProfilePage() {
           
           <h2 className="text-xl font-semibold text-gray-800">Professional Info</h2>
           <div>
-            <label className="block font-medium text-gray-700">Education</label>
+            <label className="block font-medium text-gray-700">Education การศึกษา</label>
             <textarea {...register('education')} className="w-full p-2 border border-gray-300 rounded-md mt-1" rows={3} />
           </div>
           <div>
-            <label className="block font-medium text-gray-700">Experience</label>
+            <label className="block font-medium text-gray-700">Experience อาชีพและประสบการณ์</label>
             <textarea {...register('experience')} className="w-full p-2 border border-gray-300 rounded-md mt-1" rows={3} />
           </div>
           <div>
             <label className="block font-medium text-gray-700">Skills</label>
             <input {...register('skills')} placeholder="e.g., Cooking, Programming, Driving" className="w-full p-2 border border-gray-300 rounded-md mt-1" />
           </div>
+
+           <div>
+            <label className="block font-medium text-gray-700">LINE ID</label>
+            <input 
+              {...register('lineId')} 
+              placeholder="Your LINE ID for contact"
+              className="w-full p-2 border border-gray-300 rounded-md mt-1" 
+            />
+          </div>
+
 
           <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-md mt-6 hover:bg-blue-700 font-semibold text-lg">Update Profile</button>
         </form>

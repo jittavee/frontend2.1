@@ -138,6 +138,13 @@ export default function NewJobPage() {
           </div>
 
           <div>
+              <label htmlFor="duration" className="block text-sm font-medium text-gray-700">Job Duration</label>
+              <input id="duration" {...register('duration', { required: 'Duration is required' })} placeholder="e.g., 2-3 days, 8 hours" className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm" />
+              {errors.duration && <p className="text-red-500 text-xs mt-1">{errors.duration.message}</p>}
+            </div>
+
+
+          <div>
             <label htmlFor="budget" className="block text-sm font-medium text-gray-700">Budget (Baht)</label>
             <input id="budget" type="number" step="0.01" {...register('budget')} className="mt-1 block w-full p-2 border border-gray-300 rounded-md" />
           </div>

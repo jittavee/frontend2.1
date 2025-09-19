@@ -59,6 +59,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     { href: '/admin/jobs', label: 'Job Post Management' },
     { href: '/admin/announcements', label: 'Announcements' }, 
     { href: '/admin/settings', label: 'System Settings' },
+    { href: '/admin/dashboard', label: 'Dashboard Overview' },
   ];
 
  const SidebarContent = () => (

@@ -142,7 +142,7 @@ export default function RegisterPage() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">Address ที่อยู่ (Optional)</label>
+          <label className="block text-sm font-medium text-gray-700">Addressที่อยู่ email idline messenger  (Optional)</label>
           <textarea
             {...register('address')}
             className="mt-1 block w-full p-2 border border-gray-300 rounded-md"

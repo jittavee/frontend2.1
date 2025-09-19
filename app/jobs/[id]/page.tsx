@@ -34,7 +34,25 @@ interface JobPostDetails {
   author: User;
   category: { name: string };
   applications: JobApplication[];
+  budget?: number | null;
+  location?: string | null;
+  duration?: string | null; // <-- Added duration property
 }
+
+// --- 1. เพิ่มฟังก์ชัน Validation ---
+const containsPersonalInfo = (value: string): boolean | string => {
+  const emailRegex = /[\w.-]+@[\w.-]+\.\w+/;
+  const phoneRegex = /(?:\+66|0)\d{1,2}-?\d{3,4}-?\d{4}/;
+  const socialKeywordsRegex = /line|ไลน์|facebook|เฟซ|ig|ไอจี|tel|เบอร์/i;
+  const urlRegex = /(https?:\/\/[^\s]+)/;
+
+  if (emailRegex.test(value)) return "Please do not include emails.";
+  if (phoneRegex.test(value)) return "Please do not include phone numbers.";
+  if (socialKeywordsRegex.test(value)) return "Please do not share social media or contact info.";
+  if (urlRegex.test(value)) return "Please do not include website links.";
+  return true;
+};
+
 
 // --- CommentSection Component (โค้ดฉบับเต็ม) ---
 
@@ -62,8 +80,21 @@ function CommentSection({ jobPostId }: { jobPostId: string }) {
       setComments(prevComments => [...prevComments, res.data]);
       reset();
     } catch (error) {
-      console.error("Failed to post comment:", error);
-      alert("Please log in to post a comment.");
+       if (axios.isAxiosError(error) && error.response) {
+        // 2. ถ้าเป็น Status 401 (Unauthorized)
+        if (error.response.status === 401) {
+          // ไม่ต้อง console.error ที่นี่ เพราะเป็นพฤติกรรมที่คาดหวัง
+          alert("Please log in to post a comment.");
+        } else {
+          // ถ้าเป็น Error อื่นๆ จาก Server (เช่น 400, 500) ให้ log และ alert
+          console.error("API Error on posting comment:", error.response.data);
+          alert(error.response.data.message || "Failed to post comment due to a server error.");
+        }
+      } else {
+        // ถ้าเป็น Error ที่ไม่ใช่ Axios Error (เช่น ปัญหา network, ปัญหาในโค้ด)
+        console.error("An unexpected error occurred while posting comment:", error);
+        alert("An unexpected error occurred.");
+      }
     }
   };
 
@@ -72,7 +103,9 @@ function CommentSection({ jobPostId }: { jobPostId: string }) {
       <h3 className="text-xl font-bold mb-4">Discussion ({comments.length})</h3>
       <form onSubmit={handleSubmit(onCommentSubmit)} className="flex gap-2 mb-6">
         <input 
-          {...register('content', { required: "Comment cannot be empty." })} 
+          {...register('content', { required: "Comment cannot be empty." ,validate: {
+                  noPersonalInfo: (value) => containsPersonalInfo(value)
+                }})} 
           placeholder="Write a comment..." 
           className="flex-grow p-2 border rounded-md" 
           disabled={isSubmitting}
@@ -176,6 +209,9 @@ export default function JobDetailPage() {
             <h1 className="text-3xl sm:text-4xl font-bold leading-tight">{job.title}</h1>
             <p className="text-gray-500 mt-2">Posted by {job.author.username} in <span className="font-semibold">{job.category.name}</span></p>
           </div>
+
+        
+
           <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
             {isOwner && job.status === 'OPEN' && (
               <>
@@ -189,11 +225,45 @@ export default function JobDetailPage() {
         <div className="relative w-full h-96 mb-6 rounded-md overflow-hidden bg-gray-200">
           {job.imageUrl && (<Image src={`${API_BASE_URL}${job.imageUrl}`} alt={job.title} fill style={{ objectFit: 'cover' }} priority unoptimized={true} />)}
         </div>
+
+        {/* --- ส่วนที่แก้ไข: แสดง Budget และ Location --- */}
+
+         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-700 my-4 border-t border-b py-3 bg-gray-50 rounded-md px-4">
+          
+          {job.duration && (
+                    <div>
+                        <p className="text-sm font-bold text-gray-500">Duration</p>
+                        <p className="text-lg">{job.duration}</p>
+                    </div>
+                )}
+          
+          
+          {job.budget != null && ( // ใช้ != null เพื่อเช็คทั้ง null และ undefined
+            <div className="flex items-center gap-2">
+              <strong>Budget:</strong> {new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB' }).format(job.budget)}
+            </div>
+          )}
+          {job.location && (
+            <div className="flex items-center gap-2">
+              <strong>Location:</strong> 
+              <a 
+                href={job.location.startsWith('http') ? job.location : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.location)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline break-all" // <-- เพิ่ม break-all
+              >
+                {job.location}
+              </a>
+            </div>
+          )}
+        </div>    
+
+
         <div className="prose max-w-none mb-6 whitespace-pre-wrap">{job.description}</div>
         {!isOwner && job.status === 'OPEN' && (<button onClick={handleApply} disabled={isApplied} className="bg-green-500 text-white px-6 py-3 rounded-md font-bold text-lg disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-green-600 transition-colors">{isApplied ? "Have Applied สมัครแล้ว" : "Apply Job สมัครงาน"}</button>)}
         {isOwner && (
           <div className="mt-8 p-4 border rounded-md bg-gray-50">
-            <h3 className="text-xl font-bold mb-4">Applicants ({job.applications.length})</h3>
+            <h3 className="text-xl font-bold mb-4">Applicants ผู้สมัคร ({job.applications.length})</h3>
             {job.applications.length > 0 ? (
               <ul className="space-y-2">
                 {job.applications.map(app => (
@@ -206,8 +276,11 @@ export default function JobDetailPage() {
               </ul>
             ) : (<p>No one has applied yet.</p>)}
           </div>
+          
         )}
         <CommentSection jobPostId={job.id} />
+
+        
       </div>
     </div>
   );
